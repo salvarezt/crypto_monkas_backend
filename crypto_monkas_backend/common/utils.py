@@ -1,5 +1,8 @@
 from string import ascii_lowercase, ascii_uppercase
+from itertools import pairwise
 from collections import Counter
+
+from flask_restful import reqparse
 
 MONOFREQ = {
     "e": 12.70,
@@ -77,46 +80,42 @@ BIFREQ = {
 
 
 def mono_diff_rank(word: str) -> float:
-    word_len = len(word)
-    word = Counter(word)
-    em = 0
-    for key, value in MONOFREQ.items():
-        word_value = word.get(key, 0) / word_len
-        em += abs((value - word_value))
-    em /= len(MONOFREQ)
-    return em
+    w_char_rfreq = {c: f / len(word) for c, f in Counter(word).items()}
+    mean_error = 0
+    for char, e_char_rfreq in MONOFREQ.items():
+        mean_error += abs(e_char_rfreq - w_char_rfreq.get(char, 0))
+    mean_error /= 26
+    return mean_error
 
 
 def bi_diff_rank(word: str) -> float:
-    word_len = len(word)
-    word = Counter(
-        map(''.join, zip(word, word[1:]))
-    )
-    em = 0
-    for key, value in BIFREQ.items():
-        word_value = word.get(key, 0) / (word_len - 1)
-        em += abs(value - word_value)
-    em /= len(BIFREQ)
-    return em
+    w_bi_rfreq = {
+        "".join(c): f / (len(word) - 1) for c, f in Counter(pairwise(word)).items()
+    }
+    mean_error = 0
+    for bigraph, e_bi_rfreq in BIFREQ.items():
+        mean_error += abs(e_bi_rfreq - w_bi_rfreq.get(bigraph, 0))
+    mean_error /= len(BIFREQ)
+    return mean_error
 
 
 def diff_rank(word: str) -> float:
     return mono_diff_rank(word) + bi_diff_rank(word)
 
 
-def plaintext(value: str) -> str:
-    value = value.lower()
-    value = "".join([c if c.isalpha() else "" for c in value])
-    return value
+def plaintext(text: str) -> str:
+    text = text.lower()
+    text = "".join(filter(lambda c: c.isalpha(), text))
+    return text
 
 
-def ciphertext(value: str) -> str:
-    value = value.upper()
-    value = "".join([c if c.isalpha() else "" for c in value])
-    return value
+def ciphertext(text: str) -> str:
+    text = text.upper()
+    text = "".join(filter(lambda c: c.isalpha(), text))
+    return text
 
 
-def ascci_code(c: str):
+def ascci_code(c: str) -> int:
     if len(c) > 1:
         raise ValueError("must be single character")
     c = c.lower()
@@ -124,11 +123,33 @@ def ascci_code(c: str):
     return index
 
 
-def chr_low(x: int):
+def chr_low(x: int) -> str:
     x = x % 26
     return ascii_lowercase[x]
 
 
-def chr_up(x: int):
+def chr_up(x: int) -> str:
     x = x % 26
     return ascii_uppercase[x]
+
+
+def enc_parser(key_type: callable) -> reqparse.RequestParser:
+    new_parser = reqparse.RequestParser()
+    new_parser.add_argument(
+        "plaintext", type=plaintext, required=True, help="plaintext is required"
+    )
+    new_parser.add_argument(
+        "key", type=key_type, required=True, help="unvalid argument: {error_msg}"
+    )
+    return new_parser
+
+
+def dec_parser(key_type: callable) -> reqparse.RequestParser:
+    new_parser = reqparse.RequestParser()
+    new_parser.add_argument(
+        "ciphertext", type=ciphertext, required=True, help="ciphertext is required"
+    )
+    new_parser.add_argument(
+        "key", type=key_type, required=True, help="unvalid argument: {error_msg}"
+    )
+    return new_parser

@@ -3,6 +3,7 @@ from flask_restful import Api
 from resources.shift import ShiftEnc, ShiftDec, ShiftAtk
 from resources.afin import AfinAtk, AfinDec, AfinEnc
 from resources.substitution import SubsEnc, SubsDec, SubsAtk
+from resources.vigenere import VigEnc, VigDec, VigAtk
 
 app = Flask(__name__)
 api = Api(app)
@@ -16,6 +17,9 @@ api.add_resource(AfinAtk, "/afin/atk")
 api.add_resource(SubsEnc, "/subs/enc")
 api.add_resource(SubsDec, "/subs/dec")
 api.add_resource(SubsAtk, "/subs/atk")
+api.add_resource(VigEnc, "/vig/enc")
+api.add_resource(VigDec, "/vig/dec")
+api.add_resource(VigAtk, "/vig/atk")
 
 if __name__ == "__main__":
     app.run(debug=True)

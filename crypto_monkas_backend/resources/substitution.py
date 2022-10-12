@@ -1,4 +1,5 @@
 from flask_restful import Resource, reqparse
+from collections import Counter
 from sys import path
 
 path.append("../common")
@@ -13,17 +14,6 @@ def subs_key(value: str) -> int:
         raise ValueError("Argument have a wrong lenght")
     if len(value) != len(set(value)):
         raise ValueError("Argument includes repeat letters")
-    return value
-
-
-def head_value(value: str) -> int:
-    value = value.split(" ")
-    try:
-        value = int(value[0])
-    except ValueError:
-        raise ValueError("Argument can't be parse as integer")
-    if value <= 0 or 26 < value:
-        raise ValueError("Argument out of range of possibilities")
     return value
 
 
@@ -46,9 +36,6 @@ subs_dec_parser.add_argument(
 subs_atk_parser = reqparse.RequestParser()
 subs_atk_parser.add_argument(
     "ciphertext", type=utils.ciphertext, required=True, help="ciphertext is required"
-)
-subs_atk_parser.add_argument(
-    "head", type=head_value, required=True, help="unvalid_argument: {error_msg}"
 )
 
 
@@ -74,4 +61,13 @@ class SubsDec(Resource):
 
 class SubsAtk(Resource):
     def get(self):
-        pass
+        args = subs_atk_parser.parse_args()
+        ciphertext = args["ciphertext"]
+        mono_counts = Counter(ciphertext)
+        bi_counts = Counter(zip(ciphertext, ciphertext[1:]))
+        return {
+            "mono_letters": list(mono_counts.keys()),
+            "mono_values": [x / len(ciphertext) for x in mono_counts.values()],
+            "bi_letters": list(map("".join, bi_counts.keys())),
+            "bi_values": [x / (len(ciphertext) - 1) for x in bi_counts.values()],
+        }

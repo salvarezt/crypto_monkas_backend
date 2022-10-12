@@ -71,7 +71,10 @@ class AfinEnc(Resource):
         plaintext = args["plaintext"]
         key = args["key"]
         ciphertext = "".join(
-            [utils.chr_up((utils.ascci_code(c) * key[0] + key[1]) % 26) for c in plaintext]
+            [
+                utils.chr_up((utils.ascci_code(c) * key[0] + key[1]) % 26)
+                for c in plaintext
+            ]
         )
         return {"ciphertext": ciphertext}
 
@@ -82,7 +85,12 @@ class AfinDec(Resource):
         ciphertext = args["ciphertext"]
         key = args["key"]
         plaintext = "".join(
-            [utils.chr_low(((utils.ascci_code(c) - key[1]) * pow(key[0], -1, 26)) % 26) for c in ciphertext]
+            [
+                utils.chr_low(
+                    ((utils.ascci_code(c) - key[1]) * pow(key[0], -1, 26)) % 26
+                )
+                for c in ciphertext
+            ]
         )
         return {"plaintext": plaintext}
 
@@ -92,11 +100,23 @@ class AfinAtk(Resource):
         args = afin_atk_parser.parse_args()
         ciphertext = args["ciphertext"]
         head = args["head"]
-        a_keys = filter(lambda x: not(x % 13 == 0 or x % 2 == 0), range(26))
+        a_keys = filter(lambda x: not (x % 13 == 0 or x % 2 == 0), range(26))
         b_keys = range(26)
         plaintexts_keys = [
-            ["".join([utils.chr_low(((utils.ascci_code(c) - key[1]) * pow(key[0], -1, 26)) % 26) for c in ciphertext]), key]
+            [
+                "".join(
+                    [
+                        utils.chr_low(
+                            ((utils.ascci_code(c) - key[1]) * pow(key[0], -1, 26)) % 26
+                        )
+                        for c in ciphertext
+                    ]
+                ),
+                key,
+            ]
             for key in product(a_keys, b_keys)
         ]
-        plaintexts, keys = zip(*sorted(plaintexts_keys, key=lambda x: utils.diff_rank(x[0])))
+        plaintexts, keys = zip(
+            *sorted(plaintexts_keys, key=lambda x: utils.diff_rank(x[0]))
+        )
         return {"plaintexts": plaintexts[0:head], "keys": keys[0:head]}

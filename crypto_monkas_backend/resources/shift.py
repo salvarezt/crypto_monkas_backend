@@ -6,8 +6,8 @@ path.append("../common")
 from common import utils
 
 
-def shift_key(value: str) -> int:
-    value = "".join([c if (c.isdecimal() or c.isspace()) else "" for c in value])
+def shift_key(key: str) -> int:
+    value = "".join([c if (c.isdecimal() or c.isspace()) else "" for c in key])
     value = value.split()
     try:
         value = int(value[0]) % 26
@@ -30,21 +30,9 @@ def head_value(value: str) -> int:
     return value
 
 
-shift_enc_parser = reqparse.RequestParser()
-shift_enc_parser.add_argument(
-    "plaintext", type=utils.plaintext, required=True, help="plaintext is required"
-)
-shift_enc_parser.add_argument(
-    "key", type=shift_key, required=True, help="unvalid argument: {error_msg}"
-)
+shift_enc_parser = utils.enc_parser(shift_key)
 
-shift_dec_parser = reqparse.RequestParser()
-shift_dec_parser.add_argument(
-    "ciphertext", type=utils.ciphertext, required=True, help="ciphertext is required"
-)
-shift_dec_parser.add_argument(
-    "key", type=shift_key, required=True, help="unvalid argument: {error_msg}"
-)
+shift_dec_parser = utils.dec_parser(shift_key)
 
 shift_atk_parser = reqparse.RequestParser()
 shift_atk_parser.add_argument(
@@ -60,10 +48,15 @@ class ShiftEnc(Resource):
         args = shift_enc_parser.parse_args()
         plaintext = args["plaintext"]
         key = args["key"]
-        ciphertext = "".join(
-            [utils.chr_up((utils.ascci_code(c) + key) % 26) for c in plaintext]
-        )
+        ciphertext = self.encryption(plaintext, key)
         return {"ciphertext": ciphertext}
+
+    @staticmethod
+    def encryption(plaintext: str, key: int) -> str:
+        ciphertext = ""
+        for c in plaintext:
+            ciphertext += utils.chr_up(utils.ascci_code(c) + key)
+        return ciphertext
 
 
 class ShiftDec(Resource):
@@ -71,10 +64,15 @@ class ShiftDec(Resource):
         args = shift_dec_parser.parse_args()
         ciphertext = args["ciphertext"]
         key = args["key"]
-        plaintext = "".join(
-            [utils.chr_low((utils.ascci_code(c) - key) % 26) for c in ciphertext]
-        )
+        plaintext = self.decryption(ciphertext, key)
         return {"plaintext": plaintext}
+
+    @staticmethod
+    def decryption(ciphertext: str, key: int) -> str:
+        plaintext = ""
+        for c in ciphertext:
+            plaintext += utils.chr_low(utils.ascci_code(c) - key)
+        return plaintext
 
 
 class ShiftAtk(Resource):
@@ -82,9 +80,8 @@ class ShiftAtk(Resource):
         args = shift_atk_parser.parse_args()
         ciphertext = args["ciphertext"]
         head = args["head"]
-        plaintexts_keys = [
-            ["".join([utils.chr_low((utils.ascci_code(c) - key) % 26) for c in ciphertext]), key]
-            for key in range(26)
-        ]
-        plaintexts, keys = zip(*sorted(plaintexts_keys, key=lambda x: utils.diff_rank(x[0])))
-        return {"plaintexts": plaintexts[0:head], "keys": keys[0:head]}
+        plaintexts_attempts = []
+        for key in range(26):
+            plaintexts_attempts.append((ShiftDec.decryption(ciphertext, key), key))
+        plaintexts_attempts.sort(key=lambda t: utils.diff_rank(t[0]))
+        return {"plaintext_attempts": plaintexts_attempts[:head]}
