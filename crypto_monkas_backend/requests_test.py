@@ -77,7 +77,6 @@ def shift_test():
     ]
     tests_atk = [
         (an1, "a"),
-        (an1, "35"),
         (an1, "3"),
     ]
     print("encryptions_tests")
@@ -121,7 +120,6 @@ def afin_test():
     ]
     tests_atk = [
         (an2, "a"),
-        (an2, "35"),
         (an2, "3"),
     ]
     print("encryptions_tests")
@@ -189,7 +187,7 @@ def vig_test():
         (an4, "UTIL DAY"),
     ]
     tests_atk = [
-        (an4,),
+        (an4, "5"),
     ]
     print("encryptions_tests")
     for test in tests_enc:
@@ -201,7 +199,9 @@ def vig_test():
         )
     print("attack_tests")
     for test in tests_atk:
-        print(get(ROOT + "vig/atk", json={"ciphertext": test[0]}).json())
+        print(
+            get(ROOT + "vig/atk", json={"ciphertext": test[0], "head": test[1]}).json()
+        )
 
 
 if __name__ == "__main__":

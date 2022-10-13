@@ -103,6 +103,17 @@ def diff_rank(word: str) -> float:
     return mono_diff_rank(word) + bi_diff_rank(word)
 
 
+def coincidence_index_rank(word: str) -> float:
+    word = word.lower()
+    freq = Counter(word)
+    ic = 0
+    for key in ascii_lowercase:
+        ni = freq.get(key, 0)
+        ic += ni
+    ic /= len(word) * (len(word) - 1)
+    return abs(0.067 - ic)
+
+
 def plaintext(text: str) -> str:
     text = text.lower()
     text = "".join(filter(lambda c: c.isalpha(), text))
@@ -113,6 +124,15 @@ def ciphertext(text: str) -> str:
     text = text.upper()
     text = "".join(filter(lambda c: c.isalpha(), text))
     return text
+
+
+def head_value(value: str) -> int:
+    value = value.split(" ")
+    try:
+        value = int(value[0])
+    except ValueError:
+        raise ValueError("Argument can't be parse as integer")
+    return value
 
 
 def ascci_code(c: str) -> int:

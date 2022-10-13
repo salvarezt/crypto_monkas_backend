@@ -1,4 +1,5 @@
 from flask_restful import Resource, reqparse
+from typing import List
 from collections import Counter
 from sys import path
 
@@ -7,7 +8,7 @@ path.append("../common")
 from common import utils
 
 
-def subs_key(value: str) -> int:
+def subs_key(value: str) -> List[str]:
     value = value.upper()
     value = [c for c in value if c.isalpha()]
     if len(value) != 26:
@@ -17,21 +18,9 @@ def subs_key(value: str) -> int:
     return value
 
 
-subs_enc_parser = reqparse.RequestParser()
-subs_enc_parser.add_argument(
-    "plaintext", type=utils.plaintext, required=True, help="plaintext is required"
-)
-subs_enc_parser.add_argument(
-    "key", type=subs_key, required=True, help="unvalid argument: {error_msg}"
-)
+subs_enc_parser = utils.enc_parser(subs_key)
 
-subs_dec_parser = reqparse.RequestParser()
-subs_dec_parser.add_argument(
-    "ciphertext", type=utils.ciphertext, required=True, help="ciphertext is required"
-)
-subs_dec_parser.add_argument(
-    "key", type=subs_key, required=True, help="unvalid argument: {error_msg}"
-)
+subs_dec_parser = utils.dec_parser(subs_key)
 
 subs_atk_parser = reqparse.RequestParser()
 subs_atk_parser.add_argument(
@@ -44,9 +33,16 @@ class SubsEnc(Resource):
         args = subs_enc_parser.parse_args()
         plaintext = args["plaintext"]
         key = args["key"]
-        enc_map = {x: y for x, y in zip(utils.ascii_lowercase, key)}
-        ciphertext = "".join(enc_map[x] for x in plaintext)
+        ciphertext = self.encryption(plaintext, key)
         return {"ciphertext": ciphertext}
+
+    @staticmethod
+    def encryption(plaintext: str, key: List[str]) -> str:
+        enc_map = {x: y for x, y in zip(utils.ascii_lowercase, key)}
+        ciphertext = ""
+        for c in plaintext:
+            ciphertext += enc_map[c]
+        return ciphertext
 
 
 class SubsDec(Resource):
@@ -54,9 +50,16 @@ class SubsDec(Resource):
         args = subs_dec_parser.parse_args()
         ciphertext = args["ciphertext"]
         key = args["key"]
-        dec_map = {x: y for x, y in zip(key, utils.ascii_lowercase)}
-        plaintext = "".join(dec_map[x] for x in ciphertext)
+        plaintext = self.decryption(ciphertext, key)
         return {"plaintext": plaintext}
+
+    @staticmethod
+    def decryption(ciphertext: str, key: List[str]) -> str:
+        dec_map = {x: y for x, y in zip(key, utils.ascii_lowercase)}
+        plaintext = ""
+        for c in ciphertext:
+            plaintext += dec_map[c]
+        return plaintext
 
 
 class SubsAtk(Resource):

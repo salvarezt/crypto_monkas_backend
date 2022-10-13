@@ -1,4 +1,5 @@
 from flask_restful import Resource, reqparse
+from typing import List, Tuple
 from sys import path
 
 path.append("../common")
@@ -19,17 +20,6 @@ def shift_key(key: str) -> int:
     return value
 
 
-def head_value(value: str) -> int:
-    value = value.split(" ")
-    try:
-        value = int(value[0])
-    except ValueError:
-        raise ValueError("Argument can't be parse as integer")
-    if value <= 0 or 26 < value:
-        raise ValueError("Argument out of range of possibilities")
-    return value
-
-
 shift_enc_parser = utils.enc_parser(shift_key)
 
 shift_dec_parser = utils.dec_parser(shift_key)
@@ -39,7 +29,7 @@ shift_atk_parser.add_argument(
     "ciphertext", type=utils.ciphertext, required=True, help="ciphertext is required"
 )
 shift_atk_parser.add_argument(
-    "head", type=head_value, required=True, help="unvalid_argument: {error_msg}"
+    "head", type=utils.head_value, required=True, help="unvalid_argument: {error_msg}"
 )
 
 
@@ -80,8 +70,13 @@ class ShiftAtk(Resource):
         args = shift_atk_parser.parse_args()
         ciphertext = args["ciphertext"]
         head = args["head"]
+        plaintexts_attempts = self.attack(ciphertext)
+        return {"plaintext_attempts": plaintexts_attempts[:head]}
+
+    @staticmethod
+    def attack(ciphertext: str) -> List[Tuple[str, int]]:
         plaintexts_attempts = []
         for key in range(26):
             plaintexts_attempts.append((ShiftDec.decryption(ciphertext, key), key))
         plaintexts_attempts.sort(key=lambda t: utils.diff_rank(t[0]))
-        return {"plaintext_attempts": plaintexts_attempts[:head]}
+        return plaintexts_attempts
