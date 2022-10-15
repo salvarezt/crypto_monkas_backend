@@ -1,7 +1,7 @@
 from string import ascii_lowercase, ascii_uppercase
 from itertools import pairwise
 from collections import Counter
-
+import werkzeug
 from flask_restful import reqparse
 
 MONOFREQ = {
@@ -171,5 +171,17 @@ def dec_parser(key_type: callable) -> reqparse.RequestParser:
     )
     new_parser.add_argument(
         "key", type=key_type, required=True, help="unvalid argument: {error_msg}"
+    )
+    return new_parser
+
+
+def file_parser():
+    new_parser = reqparse.RequestParser()
+    new_parser.add_argument(
+        'file',
+        type=werkzeug.datastructures.FileStorage,
+        location='files',
+        required=True,
+        help="argument is required"
     )
     return new_parser
