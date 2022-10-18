@@ -299,4 +299,4 @@ if __name__ == "__main__":
     subs_test()
     vig_test()
     perm_test()
-    print(post(ROOT + "hill/enc", files={"file": open("forest.jpg", "rb")}).json())
+    print(post(ROOT + "hill/enc/forest.jpg/12 34 5 7", files={"file": open("test_files/forest.jpg", "rb")}).json())

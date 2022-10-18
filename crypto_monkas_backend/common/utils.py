@@ -1,8 +1,9 @@
 from string import ascii_lowercase, ascii_uppercase
 from itertools import pairwise
 from collections import Counter
-import werkzeug
 from flask_restful import reqparse
+import werkzeug
+import os
 
 MONOFREQ = {
     "e": 12.70,
@@ -78,6 +79,7 @@ BIFREQ = {
     "ce": 0.65,
 }
 
+FILEPATH = os.getcwd() + "/resources/tmp/"
 
 def mono_diff_rank(word: str) -> float:
     w_char_rfreq = {c: f / len(word) for c, f in Counter(word).items()}

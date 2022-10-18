@@ -15,7 +15,6 @@ def perm_key(key: str) -> List[int]:
     if len(key) == 0:
         raise ValueError("No valid argument was provided")
     key = list(map(int, key))
-    print(key)
     if max(key) != len(key) or min(key) != 1:
         raise ValueError(
             "Argument must contain only the integers from 1 to it's lenght"
@@ -75,7 +74,6 @@ class PermDec(Resource):
             new_chunk = [None] * len(key)
             for c, k in zip(chunk, key):
                 new_chunk[k - 1] = c
-            print(new_chunk)
             plaintext += "".join(new_chunk)
         plaintext = plaintext.lower()
         return plaintext
