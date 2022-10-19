@@ -6,7 +6,7 @@ from resources.afin import AfinAtk, AfinDec, AfinEnc
 from resources.substitution import SubsEnc, SubsDec, SubsAtk
 from resources.vigenere import VigEnc, VigDec, VigAtk
 from resources.permutation import PermEnc, PermDec
-from resources.hill import HillEnc
+from resources.hill import HillEnc, HillDec
 from common import utils
 
 if os.path.exists(utils.FILEPATH):
@@ -14,12 +14,12 @@ if os.path.exists(utils.FILEPATH):
         try:
             os.unlink(utils.FILEPATH + file_path)
         except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
+            print("Failed to delete %s. Reason: %s" % (file_path, e))
 else:
     os.makedirs(utils.FILEPATH)
 
 app = Flask(__name__)
-app.config['UPLOAD FOLDER'] = utils.FILEPATH
+app.config["UPLOAD FOLDER"] = utils.FILEPATH
 
 api = Api(app)
 
@@ -38,6 +38,7 @@ api.add_resource(VigAtk, "/vig/atk")
 api.add_resource(PermEnc, "/perm/enc")
 api.add_resource(PermDec, "/perm/dec")
 api.add_resource(HillEnc, "/hill/enc/<filename>/<key>")
+api.add_resource(HillDec, "/hill/dec/<filename>/<key>")
 
 if __name__ == "__main__":
     app.run(debug=True)

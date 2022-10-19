@@ -81,6 +81,7 @@ BIFREQ = {
 
 FILEPATH = os.getcwd() + "/resources/tmp/"
 
+
 def mono_diff_rank(word: str) -> float:
     w_char_rfreq = {c: f / len(word) for c, f in Counter(word).items()}
     mean_error = 0
@@ -180,10 +181,10 @@ def dec_parser(key_type: callable) -> reqparse.RequestParser:
 def file_parser():
     new_parser = reqparse.RequestParser()
     new_parser.add_argument(
-        'file',
+        "file",
         type=werkzeug.datastructures.FileStorage,
-        location='files',
+        location="files",
         required=True,
-        help="argument is required"
+        help="argument is required",
     )
     return new_parser

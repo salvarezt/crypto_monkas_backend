@@ -1,9 +1,9 @@
-from flask_restful import Resource, reqparse, abort
-from typing import List, Tuple
+from flask_restful import Resource, abort
 import numpy as np
-import cv2
+from sympy.matrices import Matrix
+from sympy.matrices.dense import matrix2numpy
+from PIL import Image
 from sys import path
-import os
 import base64
 
 path.append("../common")
@@ -27,8 +27,8 @@ def hill_key(key: str):
         case _:
             raise ValueError("Wrong Argument size")
     key = np.matrix([key[i: i + size] for i in range(0, len(key), size)])
-    det = np.linalg.det(key)
-    if det % 3 == 0 or det % 5 == 0 or det % 17 == 0:
+    det = Matrix(key).det()
+    if det % 2 == 0:
         raise ValueError("Argument is not invertible")
     return key
 
@@ -45,7 +45,6 @@ hill_dec_parser = utils.file_parser()
 
 class HillEnc(Resource):
     def post(self, filename: str, key: str):
-        print(filename, key)
         try:
             key = hill_key(key)
         except ValueError as error:
@@ -53,34 +52,29 @@ class HillEnc(Resource):
         if not valid_format(filename):
             abort(400, message="Unvalid File Format")
         args = hill_enc_parser.parse_args()
-        image_file = args['file'].read()
-        image_file = np.fromstring(image_file, np.uint8)
-        image_file = cv2.imdecode(image_file, cv2.IMREAD_UNCHANGED)
-        cv2.imwrite(utils.FILEPATH + filename, image_file)
+        image_file = args["file"]
+        image_file.save(utils.FILEPATH + filename)
         self.encryption(filename, key)
-        with open(utils.FILEPATH + filename, "rb") as ciphertext:
+        with open(utils.FILEPATH + "encimg" + filename, "rb") as ciphertext:
             ciphertext = base64.b64encode(ciphertext.read()).decode()
         return {"ciphertext": ciphertext}
 
     @staticmethod
     def encryption(filename: str, key: np.matrix) -> str:
-        image = cv2.imread(utils.FILEPATH + filename)
-        height, width, _ = image.shape
+        image = Image.open(utils.FILEPATH + filename)
+        height, width = image.size
         kheight, kwidth = key.shape
         dimensions = (width // kwidth * kwidth, height // kheight * kheight)
-        image = cv2.resize(image, dimensions, interpolation=cv2.INTER_AREA)
-        print(image.shape)
-        color_channels = cv2.split(image)
-        new_channels = []
-        for channel in color_channels:
-            print(channel.shape)
-            for i in range(0, channel.shape[0], kheight):
-                for j in range(0, channel.shape[1], kwidth):
-                    print(i, j)
-                    channel[i: i + kheight, j: j + kwidth] = np.matmul(channel[i: i + kheight, j: j + kwidth], key)
-            new_channels.append(channel)
-        image = cv2.merge(new_channels)
-        cv2.imwrite(utils.FILEPATH + filename, image)
+        image = image.resize(dimensions)
+        image = np.array(image)
+        for channel in range(3):
+            for i in range(0, image.shape[0], kheight):
+                for j in range(0, image.shape[1], kwidth):
+                    image[i: i + kheight, j: j + kwidth, channel] = np.matmul(
+                            image[i: i + kheight, j: j + kwidth, channel], key
+                    ) % 256
+        image = Image.fromarray(image)
+        image.save(utils.FILEPATH + "encimg" + filename)
 
 
 class HillDec(Resource):
@@ -92,9 +86,28 @@ class HillDec(Resource):
         if not valid_format(filename):
             abort(400, message="Unvalid File Format")
         args = hill_enc_parser.parse_args()
-        image_file = args['file']
-        image_file.save(filename)
+        image_file = args["file"]
+        image_file.save(utils.FILEPATH + filename)
+        self.decryption(filename, key)
+        with open(utils.FILEPATH + "decimg" + filename, "rb") as plaintext:
+            plaintext = base64.b64encode(plaintext.read()).decode()
+        return {"plaintext": plaintext}
 
     @staticmethod
     def decryption(filename: str, key: int) -> str:
-        pass
+        invkey = Matrix(key).inv_mod(256)
+        invkey = matrix2numpy(invkey)
+        image = Image.open(utils.FILEPATH + filename)
+        height, width = image.size
+        kheight, kwidth = key.shape
+        dimensions = (width // kwidth * kwidth, height // kheight * kheight)
+        image = image.resize(dimensions)
+        image = np.array(image)
+        for channel in range(3):
+            for i in range(0, image.shape[0], kheight):
+                for j in range(0, image.shape[1], kwidth):
+                    image[i: i + kheight,j: j + kwidth, channel] = np.matmul(
+                        image[i: i + kheight, j: j + kwidth, channel], invkey
+                    ) % 256
+        image = Image.fromarray(image)
+        image.save(utils.FILEPATH + "decimg" + filename)
