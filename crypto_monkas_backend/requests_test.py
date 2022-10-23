@@ -1,4 +1,5 @@
 from requests import get, post
+from sympy.matrices import Matrix
 
 ex1 = """I found myself within a forest dark, for the straightfoward pathway had been lost.
          Ah me! How hard a thing is to say, what was this forest savage, rough, and stern,
@@ -294,20 +295,43 @@ def perm_test():
 
 
 if __name__ == "__main__":
-    shift_test()
-    afin_test()
-    subs_test()
-    vig_test()
-    perm_test()
-    print(
+    #shift_test()
+    #afin_test()
+    #subs_test()
+    #vig_test()
+    #perm_test()
+    """print(
         post(
             ROOT + "hill/enc/forest.jpg/12 13 11 25 72 23 43 3 11",
             files={"file": open("test_files/forest.jpg", "rb")},
         ).json()
-    )
-    print(
+    )"""
+    # TDES modes: ECB, CBC, OFB, CBF
+    # Format: "[mode], [iv], [key]" where
+    # [iv] (inicial vector) is made of 8 bytes (8 hex values)
+    # [key] is made of 16 or 24 bytes (16 or 24 numbers on the range of 0-255)
+    post(
+        ROOT + "tdes/dec/CBCnotsosmall.png/CBC, f0 00 00 af 61 f8 2f f9, 212 214 106 50 70 30 42 90 11 12 70 45 46 80 52 40 12 15 46 78 222 100 255 24",
+        files={"file": open("test_files/CBCnotsosmall.png", "rb")},
+    ).json()
+    """print(
         post(
             ROOT + "hill/dec/encforest.jpg/12 13 11 25 72 23 43 3 11",
             files={"file": open("test_files/encforest.jpg", "rb")},
         ).json()
-    )
+    )"""
+    
+    post(
+        ROOT + "tdes/dec/OFBnotsosmall.png/OFB, f0 00 00 af 61 f8 2f f9, 212 214 106 50 70 30 42 90 11 12 70 45 46 80 52 40 12 15 46 78 222 100 255 24",
+        files={"file": open("test_files/OFBnotsosmall.png", "rb")},
+    ).json()
+    """
+    post(
+        ROOT + "hill/enc/encforestminecra.jpg/229 190 165 70 205 153 133 109 221",
+        files={"file": open("test_files/encforestminecra.jpg", "rb")},
+    ).json()
+    """
+    post(
+        ROOT + "tdes/dec/CFBnotsosmall.png/CFB, f0 00 00 af 61 f8 2f f9, 212 214 106 50 70 30 42 90 11 12 70 45 46 80 52 40 12 15 46 78 222 100 255 24",
+        files={"file": open("test_files/CFBnotsosmall.png", "rb")},
+    ).json()

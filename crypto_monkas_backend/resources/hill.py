@@ -28,7 +28,7 @@ def hill_key(key: str):
             raise ValueError("Wrong Argument size")
     key = np.matrix([key[i: i + size] for i in range(0, len(key), size)])
     det = Matrix(key).det()
-    if det % 2 == 0:
+    if det % 256 == 0:
         raise ValueError("Argument is not invertible")
     return key
 
@@ -64,9 +64,10 @@ class HillEnc(Resource):
         image = Image.open(utils.FILEPATH + filename)
         height, width = image.size
         kheight, kwidth = key.shape
-        dimensions = (width // kwidth * kwidth, height // kheight * kheight)
+        dimensions = (height // kheight * kheight, width // kwidth * kwidth)
         image = image.resize(dimensions)
         image = np.array(image)
+        print(image[:kheight, :kwidth, 0])
         for channel in range(3):
             for i in range(0, image.shape[0], kheight):
                 for j in range(0, image.shape[1], kwidth):
@@ -100,7 +101,7 @@ class HillDec(Resource):
         image = Image.open(utils.FILEPATH + filename)
         height, width = image.size
         kheight, kwidth = key.shape
-        dimensions = (width // kwidth * kwidth, height // kheight * kheight)
+        dimensions = (height // kheight * kheight, width // kwidth * kwidth)
         image = image.resize(dimensions)
         image = np.array(image)
         for channel in range(3):
